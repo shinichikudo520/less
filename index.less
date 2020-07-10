@@ -1,0 +1,416 @@
+// 2. 变量：
+// 2.1 完全的'常量'，只能定义一次
+@blue:blue;
+@red:red;
+// 2.2 让选择器动态
+@mySelector:#test11;
+@wrap:wrap;
+@borderStyle:border-style;
+@Solid:solid;
+// 变量作为选择器名称/属性名称时，变量名必须要用{}包起来:@{变量名}
+// @{变量名}这种写法还有 10. 字符串插值
+@{mySelector}{ 
+	color: red;
+	.@{wrap}{
+		color: green;
+		@{borderStyle}:@Solid;
+	}
+}
+// 2.3 用变量去定义变量
+ /* Less */
+@fnord:  "I am fnord.";
+@var1:    "fnord";
+#test12::after{
+	content: @@var1; //将@var替换为其值 content:@fnord;
+}
+
+// 3. 混合：定义一些通用的属性集合为一个class，以便任何元素都能重复使用
+// 3.1 普通混合
+.bordered{
+	border-top:1px dotted black;
+	border-bottom: 2px solid black;
+	margin: 10px 0px;
+}
+// 3.2 不带参数的属性集合，隐藏这个属性，不让它暴露到css中
+.fontSize(){
+	font-size: 20px;
+}
+// 3.3 带参数的混合
+.bgColor(@color){
+	background-color: @color;
+}
+// 参数不定时，可用...，类似于ES6中的扩展运算符
+.bgColor(@color,...){
+	background-color: @arguments;
+}
+// 3.4 带默认参数的混合
+.width(@width:200px){
+	width: @width;
+}
+// 3.5 @arguments包含传递的所有参数，不必单独处理每一个
+.borderLeft(@width:5px,@color:red,@type:solid){
+	border-left: @arguments;
+}
+// 3.6. 模式匹配：根据switch值而表现各异,类似于面向对象编程中的多态
+// 3.6.1 根据值匹配
+.mixin (dark, @color) {
+  color: darken(@color, 5%);
+}
+.mixin (light, @color) {
+  color: lighten(@color, 5%);
+}
+// 3.6.1 两种模式共有的属性集合
+// 只有被匹配的混合才会被使用。变量可以匹配任意的传入值，而变量以外的固定值就仅仅匹配与其相等的传入值
+// 用@_表示任一模式
+.mixin (@_, @color) {
+  display: inline-block;
+}
+// 3.6.2 根据参数匹配：匹配多个参数,参数个数不同表示不同的模式
+.mixin1(@a){
+	background-color: @a;
+}
+.mixin1(@a,@b,@c){
+	border: @arguments;
+}
+// 3.6.3 导引表达式：根据表达式进行匹配，而非值和参数匹配
+// when：使用when关键字，定义一个导引序列
+/**
+ * 注意：
+ * ①. 导引中可用的全部比较运算有： > >= = =< <。此外，关键字true只表示布尔真值，除去关键字true以外的值都被视示布尔假
+ * ②. 导引序列使用逗号‘,’—分割，任一条件满足则匹配，实现 或 条件，使用and关键字实现 与 条件，使用not关键字实现 非 条件
+ * ③. 导引可以无参数，也可以对参数进行比较
+ * ④. 对值类型做匹配，可使用is*函数
+ * 	a. 常用的is*函数：
+ * 	// 值类型
+	iscolor();      // 是否为颜色
+	isnumber();     // 是否为数值
+	isstring();     // 是否为字符串
+	iskeyword();    // 是否为keyword
+	isurl();        // 是否为url(./one.jpg)
+
+	// 单位
+	ispixel(); // px
+	ispercentage(); // %
+	isem(); // em
+ */
+.mixin2(@a) when (@a >= 24px) {
+	font-size:@a;
+	color: red;
+} 
+.mixin2(@a) when (@a < 24px) {
+	font-size:@a;
+	color: green;
+}
+.mixin2(@a) when (@a <= 12px),(@a > 30px) {
+	font-size:@a;
+	color: dimgray;
+}
+.mixin2(@a) when not (@a <= 12px ){
+	cursor: pointer;
+ }
+.mixin2(@a){
+	display: inline-block;
+ }
+.mixin2(@a,@b) when (isstring(@a)),(@a < @b) {
+	width: @b;
+	background-color: blue;
+}
+.mixin2(@a,@b) when (isstring(@a)),(@a >= @b) {
+	width: @a;
+	background-color: red;
+}
+ 
+
+
+#test1 {
+	color: @red;
+	.bordered;
+	.fontSize;
+	.bgColor(yellow); // 传的字符串参数不用带''，比如直接写 background-color: yellow; 也是没有带''的
+	.width;
+	.borderLeft;
+}
+@switch2:light;
+#test2 {
+	.mixin(@switch2,pink);
+	.mixin1(blue);
+}
+@switch3:dark;
+#test3 {
+	.mixin(@switch3,pink);
+	.mixin1(1px,solid,blue);
+}
+#test4 {
+	.mixin2(30px);
+	.mixin2(100px,200px);
+}
+#test5 {
+	.mixin2(12px);
+	.mixin2(200px,100px);
+}
+// 4. 嵌套
+// 4.1 嵌套的方式编写层叠样式
+/**
+ * css：
+#header { color: black; }
+#header .navigation {
+  font-size: 12px;
+}
+#header .logo { 
+  width: 300px; 
+}
+#header .logo:hover {
+  text-decoration: none;
+}
+ */
+// 注意：&符号用于写串联选择器，而不是写后代选择器。这点对伪类尤其有用，如:hover和:focus，代表的上一层选择器的名字，此例便是.logo
+#test6 {
+	color: black;
+	.navigation {
+		font-size: 12px;
+	}
+	.logo {
+		width: 300px;
+		&:hover { text-decoration: underline }
+	}
+}
+/**
+ css：
+ .bordered.float {
+   float: left;  
+ }
+ .bordered .top {
+   margin: 5px;
+ }
+ */
+.bordered {
+	&.float{
+		float: left;
+	}
+	.top{
+		margin: 5px;
+	}
+}
+// 5. 运算：
+/**
+ * - 加减法时 以第一个数据的单位为基准
+ * - 乘除法时 注意单位一定要统一
+ */
+// 5.1 颜色、数字、变量都可以参与运算
+@base: 5%;
+@filler: @base * 2;
+@other: @base + @filler;
+@base-color:#888 / 4;
+// 5.2 less运算能够分辨出颜色和单位
+@var: 1px + 5;  //less会输出6px
+@width:(@var + 5) * 2;
+#test7 {
+	color: @base-color;
+	background-color: @base-color + #111;
+	height: 100% / 2 + @filler;
+	width: @width;
+	border: (@width * 2) solid black;
+}
+// 6. 内置函数
+/**
+// color函数
+lighten(@color, 10%);     // 返回一个比@color低10％更轻的颜色
+
+darken(@color, 10%);      // 返回一个比@color高10％较暗的颜色
+
+saturate(@color, 10%);    // 返回比@color多饱和度10％的颜色
+desaturate(@color, 10%);  // 返回一个比@color少饱和度10％的颜色
+
+fadein(@color, 10%);      // 返回一个比@color少10％透明度的颜色
+fadeout(@color, 10%);     // 返回一个比@color多10％透明度的颜色
+fade(@color, 50%);        // 返回一个颜色透明度为50％的颜色
+
+spin(@color, 10);         // 返回色调比@color大10度的颜色
+
+spin(@color, -10);        // 返回一个比@color小10度色调的颜色
+
+mix(@color1, @color2);    // 返回一个混合@ color1和@ color2的颜色
+// math函数
+round(1.67); // returns `2`
+ceil(2.4);   // returns `3`
+floor(2.6);  // returns `2`
+percentage(0.5); // returns `50%`
+ */
+
+// 7. 命名空间:为了更好组织CSS或者单纯是为了更好的封装，将一些变量或者混合模块打包起来
+#bundle(){
+	.button(){
+		display: block;
+		border: 1px solid black;
+		background-color: grey;
+		&:hover{
+			background-color: white;
+		}
+	}
+	primary: green;
+	secondary: blue;
+}
+/**
+ * - 在 CSS 中`>` 选择器，选择的是 儿子元素，就是 必须与父元素 有直接血源的元素。
+ * - 在引入命令空间时，如使用 `>` 选择器，父元素不能加 括号。
+ * - 不得单独使用命名空间的方法 必须先引入命名空间，才能使用 其中方法。
+ * - 子方法 可以使用上一层传进来的方法
+ */
+#test8 {
+	#bundle>.button();
+	color: #bundle[primary];
+}
+// 等价于
+/**
+ #test8 {
+ 	#bundle
+	.button();
+ 	color: #bundle[primary];
+ }
+ */
+// 8. 作用域
+@var: red;
+
+#test9 {
+  @var: orange;
+  #header {
+    color: @var; // white
+  }
+}
+
+#test9 {
+  color: @var; // red  
+}
+// 9. 注释：
+// 9.1 /*注释内容*/，css的注释方式保留
+// 9.2 // 双斜杠注释
+// 9.3 多行注释
+/**
+ * 多行注释
+ */
+
+// 10. 字符串插值
+@base-url: "https://timgsa.baidu.com";
+#test10 {
+	width: 100%;
+	height: 200px;
+	background-image: url("@{base-url}/timg?image&quality=80&size=b9999_10000&sec=1593003675405&di=0949562d30ea9d415ad3847dd3597202&imgtype=0&src=http%3A%2F%2Fn.sinaimg.cn%2Fsinakd10112%2F227%2Fw640h387%2F20200624%2F70ce-ivmqpci3615242.jpg");
+}
+
+// 11. 转义符：~
+
+// 12. 媒体查询：使用嵌套
+/**
+	@media screen and (maxwidth:768px){
+		#main{
+			width:100px; 
+		}
+	}
+	@media screen and (maxwidth:960px){
+		#main{
+			width:200px; 
+		}
+	}
+	@media tv{
+	 #main{
+	   width:2000px;
+	 }
+	}
+ */
+#main {
+	@media screen {
+		@media (maxwidth:768px){
+			width:100px; 
+		}
+		@media (maxwidth:960px){
+			width:200px; 
+		}
+	}
+	@media tv {
+		width:2000px;
+	}
+}
+// 13. !important
+.red{
+	color: red;
+}
+.blue{
+	color: blue;
+}
+#test13{
+	.red() !important;
+	.blue();
+}
+// 14. 继承：extend,可继承 
+// 14.1 所匹配声明中的全部样式。
+.animation{
+	transition: all .3s ease-out;
+	.hide{
+		transform:scale(0);
+	}
+}
+#main{
+  &:extend(.animation);
+}
+#con{
+  &:extend(.animation .hide);
+}
+/**
+	.animation,#main{
+	 transition: all .3s ease-out;
+	}
+	.animation .hide , #con{
+	   transform:scale(0);
+	}
+ */
+// 14.2. all:使用选择器匹配到的 全部声明。
+.main{
+	width: 200px;
+}
+.main {
+	&:after {
+	  content:"Less is good!";
+	}
+}
+#wrap:extend(#main all) {}
+/**
+	.main,#wrap{
+		width: 200px;
+	}
+	.main:after, #wrap:after {
+	   content: "Less is good!";
+	}
+ */
+// 14.3 
+/**
+ * 选择器和扩展之间 是允许有空格的：pre:hover :extend(div pre).
+ * 可以有多个扩展: pre:hover:extend(div pre):extend(.bucket tr) - 注意这与 pre:hover:extend(div pre, .bucket tr)一样。
+ * 这是不可以的，扩展必须在最后 : pre:hover:extend(div pre).nth-child(odd)。
+ * 如果一个规则集包含多个选择器，所有选择器都可以使用extend关键字。
+ */
+
+// 15. 在less使用js代码
+@content:`"aaa".toUpperCase()`;
+#test14 {
+	&::after{
+		content: @content;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
